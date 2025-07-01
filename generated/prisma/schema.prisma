@@ -1,0 +1,58 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model comment {
+  id         Int       @id @unique(map: "id_UNIQUE") @default(autoincrement())
+  task_id    Int
+  user_id    Int
+  content    String    @db.Text
+  created_at DateTime? @db.DateTime(0)
+  tasks      tasks     @relation(fields: [task_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_comment_task")
+  user       user      @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_comment_user")
+
+  @@index([task_id], map: "fk_comment_task")
+  @@index([user_id], map: "fk_comment_user")
+}
+
+model project {
+  id         Int       @id @unique(map: "id_UNIQUE") @default(autoincrement())
+  name       String    @db.VarChar(255)
+  user_id    Int
+  created_at DateTime? @db.DateTime(0)
+  user       user      @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_project_user")
+  tasks      tasks[]
+
+  @@index([user_id], map: "fk_project_user")
+}
+
+model tasks {
+  id          Int       @id @unique(map: "id_UNIQUE") @default(autoincrement())
+  title       String    @db.VarChar(255)
+  description String?   @db.Text
+  project_id  Int
+  status      String    @db.VarChar(45)
+  priority    String    @db.VarChar(45)
+  due_date    DateTime? @db.Date
+  created_at  DateTime? @db.DateTime(0)
+  comment     comment[]
+  project     project   @relation(fields: [project_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_task_project")
+
+  @@index([project_id], map: "fk_task_project")
+}
+
+model user {
+  id         Int       @id @unique(map: "id_UNIQUE") @default(autoincrement())
+  name       String?   @db.VarChar(255)
+  email      String    @unique(map: "email_UNIQUE") @db.VarChar(255)
+  password   String    @db.VarChar(255)
+  created_at DateTime? @db.DateTime(0)
+  comment    comment[]
+  project    project[]
+}
